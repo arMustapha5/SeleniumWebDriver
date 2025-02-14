@@ -1,58 +1,51 @@
 package Base;
 
+import com.GoogleSearchPage;
 import org.junit.jupiter.api.*;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import java.time.Duration;
 
 public class GoogleSearchTest {
     private WebDriver driver;
-    private WebDriverWait wait;
+    private GoogleSearchPage googlePage;
 
     @BeforeEach
     void setUp() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         driver = new ChromeDriver(options);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(100));
+        googlePage = new GoogleSearchPage(driver);
     }
 
     @Test
     void testGoogleSearch() {
-        // Go to Google
-        driver.get("https://www.google.com");
+        String expectedResult = "WebDriver | Selenium";
+
+        // Using POM methods to perform the test
+        googlePage.navigateToGoogle();
         System.setProperty("webdriver.chrome.driver", "resources/chromedriver.exe");
-        // Find and type in search box
-        WebElement searchBox = driver.findElement(By.name("q"));
-        searchBox.sendKeys("Selenium WebDriver");
+        googlePage.searchFor("Selenium WebDriver");
+        googlePage.clickFirstResult();
 
-        // Submit search
-        searchBox.submit();
+        System.out.println("New page title: " + googlePage.getCurrentPageTitle());
 
-        // Wait for search results to appear
-        // This CSS selector targets the first search result link
-        By firstResultLocator = By.cssSelector("div.g h3");
-        wait.until(ExpectedConditions.presenceOfElementLocated(firstResultLocator));
+        if (googlePage.verifySearchResult(expectedResult))
+            System.out.println("Search has passed");
+        else
+            System.out.println("Search has Failed");
 
-        // Find and click the first result
-        WebElement firstResult = driver.findElement(firstResultLocator);
-        System.out.println("Clicking on: " + firstResult.getText());
-        firstResult.click();
-
-        // Wait for new page to load and print its title
-        wait.until(ExpectedConditions.not(ExpectedConditions.titleContains("Google Search")));
-        System.out.println("New page title: " + driver.getTitle());
+        // Add wait time after verifying the result
+        try {
+            System.out.println("Waiting for 5 seconds before closing...");
+            Thread.sleep(5000); // Waits for 5 seconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @AfterEach
-    void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+    void tearDown() throws InterruptedException {
+        driver.quit();
     }
 }
